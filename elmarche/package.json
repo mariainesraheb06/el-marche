@@ -27,7 +27,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.54.0",
-    "next": "14.2.35",
+    "next": "^16.4.0",
     "next-themes": "^0.4.6",
     "react": "^18",
     "react-dom": "^18",
@@ -43,7 +43,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "14.2.35",
+    "eslint-config-next": "^16.4.0",
     "postcss": "^8",
     "prettier": "^3.9.9",
     "prettier-plugin-tailwindcss": "^0.8.1",
@@ -52,6 +52,6 @@
     "vitest": "^4.1.11"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   }
 }
