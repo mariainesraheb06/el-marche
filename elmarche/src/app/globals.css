@@ -15,20 +15,17 @@
     --secondary: 40 30% 92%;
     --secondary-foreground: 0 0% 17%;
     --muted: 40 30% 92%;
-    --muted-foreground: 0 0% 56%;
+    --muted-foreground: 0 0% 42%;
     --accent: 16 66% 56%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 40 20% 88%;
-    --input: 40 20% 88%;
+    --whatsapp: 142 70% 49%;
+    --whatsapp-foreground: 0 0% 100%;
+    --border: 40 30% 86%;
+    --input: 40 30% 86%;
     --ring: 143 50% 20%;
-    --chart-1: 143 50% 20%;
-    --chart-2: 16 66% 56%;
-    --chart-3: 40 43% 70%;
-    --chart-4: 0 0% 56%;
-    --chart-5: 0 0% 17%;
-    --radius: 0.75rem;
+    --radius: 1rem;
   }
 
   * {
@@ -37,17 +34,12 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-inter), system-ui, sans-serif;
   }
 
   h1,
   h2,
   h3,
   h4 {
-    font-family: var(--font-poppins), system-ui, sans-serif;
+    @apply font-heading;
   }
-}
-
-.font-script {
-  font-family: var(--font-caveat), cursive;
 }
