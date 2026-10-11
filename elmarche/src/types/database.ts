@@ -230,21 +230,27 @@ export type Database = {
           full_name: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
+          shop_name: string | null
           whatsapp_number: string | null
+          wilaya_code: number | null
         }
         Insert: {
           created_at?: string
           full_name?: string | null
           id: string
           role?: Database["public"]["Enums"]["user_role"]
+          shop_name?: string | null
           whatsapp_number?: string | null
+          wilaya_code?: number | null
         }
         Update: {
           created_at?: string
           full_name?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
+          shop_name?: string | null
           whatsapp_number?: string | null
+          wilaya_code?: number | null
         }
         Relationships: []
       }

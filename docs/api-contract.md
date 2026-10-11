@@ -13,10 +13,10 @@ Source of truth for every route. Change it in the same pull request as the code,
 ## Shared shapes
 
 - **Category**: `{ id, slug, name }`
-- **ProductSummary**: `{ id, title, priceDzd, wilayaCode, categorySlug, imageUrl, createdAt }`
-- **Product**: `{ id, title, description, priceDzd, wilayaCode, category: Category, tags: string[], images: { id, url, position }[], seller: { id, fullName, whatsappNumber }, viewCount, createdAt }`
+- **ProductSummary**: `{ id, title, priceDzd, wilayaCode, categorySlug, imageUrl, shopName, createdAt }`
+- **Product**: `{ id, title, description, priceDzd, wilayaCode, category: Category, tags: string[], images: { id, url, position }[], seller: { id, fullName, shopName, whatsappNumber }, viewCount, createdAt }`
 - **SellerProduct**: ProductSummary plus `status` (`pending` | `approved` | `rejected`)
-- **Profile**: `{ id, fullName, role, whatsappNumber }`
+- **Profile**: `{ id, fullName, role, shopName, wilayaCode, whatsappNumber }`
 
 ## Public routes
 

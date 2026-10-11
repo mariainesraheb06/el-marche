@@ -34,23 +34,38 @@ export async function signup(formData: FormData) {
     fullName: formData.get("fullName"),
     email: formData.get("email"),
     password: formData.get("password"),
+    wilaya: formData.get("wilaya"),
     role: formData.get("role"),
+    shopName: formData.get("shopName"),
+    whatsapp: formData.get("whatsapp"),
   });
   if (!parsed.success) {
-    redirect("/signup?error=invalid_input");
+    const field = String(parsed.error.issues[0]?.path[0] ?? "");
+    redirect(`/signup?error=invalid_input&field=${encodeURIComponent(field)}`);
   }
 
-  const { fullName, email, password, role } = parsed.data;
+  const data = parsed.data;
+  const metadata =
+    data.role === "seller"
+      ? {
+          full_name: data.fullName,
+          role: data.role,
+          wilaya_code: data.wilaya,
+          shop_name: data.shopName,
+          whatsapp_number: data.whatsapp,
+        }
+      : { full_name: data.fullName, role: data.role, wilaya_code: data.wilaya };
+
   const supabase = createClient();
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { data: { full_name: fullName, role } },
+  const { data: result, error } = await supabase.auth.signUp({
+    email: data.email,
+    password: data.password,
+    options: { data: metadata },
   });
   if (error) {
     redirect("/signup?error=signup_failed");
   }
-  if (!data.session) {
+  if (!result.session) {
     redirect("/login?message=check_email");
   }
 

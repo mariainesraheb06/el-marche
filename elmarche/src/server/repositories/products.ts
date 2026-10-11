@@ -14,6 +14,7 @@ type SummaryRow = {
   created_at: string;
   categories: { slug: string };
   product_images: ImageRow[];
+  profiles: { shop_name: string | null; full_name: string | null } | null;
 };
 
 type DetailRow = {
@@ -27,7 +28,12 @@ type DetailRow = {
   created_at: string;
   categories: { id: number; slug: string; name: string };
   product_images: ImageRow[];
-  profiles: { id: string; full_name: string | null; whatsapp_number: string | null } | null;
+  profiles: {
+    id: string;
+    full_name: string | null;
+    shop_name: string | null;
+    whatsapp_number: string | null;
+  } | null;
 };
 
 type Client = ReturnType<typeof createClient>;
@@ -48,7 +54,7 @@ export async function listProducts(query: ProductsQuery) {
   let builder = supabase
     .from("products")
     .select(
-      "id, title, price_dzd, wilaya_code, created_at, categories!inner(slug), product_images(id, storage_path, position)",
+      "id, title, price_dzd, wilaya_code, created_at, categories!inner(slug), product_images(id, storage_path, position), profiles!seller_id(shop_name, full_name)",
       { count: "exact" },
     )
     .eq("status", "approved");
@@ -94,6 +100,7 @@ export async function listProducts(query: ProductsQuery) {
       wilayaCode: row.wilaya_code,
       categorySlug: row.categories.slug,
       imageUrl: first ? imageUrl(supabase, first.storage_path) : null,
+      shopName: row.profiles?.shop_name ?? row.profiles?.full_name ?? null,
       createdAt: row.created_at,
     };
   });
@@ -106,7 +113,7 @@ export async function getProductById(id: string) {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, title, description, price_dzd, wilaya_code, tags, view_count, created_at, categories!inner(id, slug, name), product_images(id, storage_path, position), profiles!seller_id(id, full_name, whatsapp_number)",
+      "id, title, description, price_dzd, wilaya_code, tags, view_count, created_at, categories!inner(id, slug, name), product_images(id, storage_path, position), profiles!seller_id(id, full_name, shop_name, whatsapp_number)",
     )
     .eq("id", id)
     .eq("status", "approved")
@@ -133,6 +140,7 @@ export async function getProductById(id: string) {
       ? {
           id: row.profiles.id,
           fullName: row.profiles.full_name,
+          shopName: row.profiles.shop_name,
           whatsappNumber: row.profiles.whatsapp_number,
         }
       : null,
