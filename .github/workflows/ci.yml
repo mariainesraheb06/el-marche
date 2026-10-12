@@ -42,3 +42,6 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: ruff check .
       - run: python -m pytest
+        env:
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          INTERNAL_API_KEY: test-key-for-ci

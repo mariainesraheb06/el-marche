@@ -22,8 +22,6 @@ Fallback:
 """
 from __future__ import annotations
 
-from collections import Counter
-
 import numpy as np
 
 from app.config import settings
@@ -34,7 +32,6 @@ from app.db import (
     fetch_user_events,
     get_category_of_products,
 )
-
 
 # ---------------------------------------------------------------------------
 # Feature engineering
