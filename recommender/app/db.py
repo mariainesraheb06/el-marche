@@ -1,6 +1,6 @@
 """PostgreSQL connection using psycopg (Supabase)."""
 from contextlib import contextmanager
-from typing import Iterator
+from collections.abc import Iterator
 
 import psycopg
 from psycopg.rows import dict_row
@@ -34,7 +34,7 @@ def fetch_user_events(user_id: str, limit: int = 50) -> list[dict]:
         ORDER BY created_at DESC
         LIMIT %s
     """
-    with get_connection() as conn:
+    with get_connection() as conn, conn.cursor() as cur:
         with conn.cursor() as cur:
             cur.execute(query, (user_id, limit))
             return cur.fetchall()
@@ -49,7 +49,7 @@ def fetch_user_searches(user_id: str, limit: int = 20) -> list[dict]:
         ORDER BY created_at DESC
         LIMIT %s
     """
-    with get_connection() as conn:
+    with get_connection() as conn, conn.cursor() as cur:
         with conn.cursor() as cur:
             cur.execute(query, (user_id, limit))
             return cur.fetchall()
@@ -72,7 +72,7 @@ def fetch_candidate_products(exclude_ids: list[str] | None = None) -> list[dict]
         WHERE status = 'approved'
         {exclude_clause}
     """
-    with get_connection() as conn:
+    with get_connection() as conn, conn.cursor() as cur:
         with conn.cursor() as cur:
             cur.execute(query, params)
             return cur.fetchall()

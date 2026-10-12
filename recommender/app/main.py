@@ -34,10 +34,10 @@ def get_recommendations(
 
     product_ids, strategy = recommend(user_id, limit)
 
-    # Cache the result (best effort; don't fail the request if it errors)
+        # Cache the result (best effort; don't fail the request if it errors)
     try:
         upsert_recommendations(user_id, product_ids, strategy)
-    except Exception:
+    except Exception:  # noqa: BLE001 — cache write must never break the response
         pass
 
     return RecommendationResponse(productIds=product_ids, strategy=strategy)
