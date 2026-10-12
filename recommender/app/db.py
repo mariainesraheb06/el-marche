@@ -1,6 +1,6 @@
 """PostgreSQL connection using psycopg (Supabase)."""
-from contextlib import contextmanager
 from collections.abc import Iterator
+from contextlib import contextmanager
 
 import psycopg
 from psycopg.rows import dict_row
@@ -34,10 +34,9 @@ def fetch_user_events(user_id: str, limit: int = 50) -> list[dict]:
         ORDER BY created_at DESC
         LIMIT %s
     """
-    with get_connection() as conn, conn.cursor() as cur:
-        with conn.cursor() as cur:
-            cur.execute(query, (user_id, limit))
-            return cur.fetchall()
+    with get_connection() as conn, conn.cursor() as cur, conn.cursor() as cur:
+        cur.execute(query, (user_id, limit))
+        return cur.fetchall()
 
 
 def fetch_user_searches(user_id: str, limit: int = 20) -> list[dict]:
@@ -49,10 +48,9 @@ def fetch_user_searches(user_id: str, limit: int = 20) -> list[dict]:
         ORDER BY created_at DESC
         LIMIT %s
     """
-    with get_connection() as conn, conn.cursor() as cur:
-        with conn.cursor() as cur:
-            cur.execute(query, (user_id, limit))
-            return cur.fetchall()
+    with get_connection() as conn, conn.cursor() as cur, conn.cursor() as cur:
+        cur.execute(query, (user_id, limit))
+        return cur.fetchall()
 
 
 def fetch_candidate_products(exclude_ids: list[str] | None = None) -> list[dict]:
@@ -72,10 +70,9 @@ def fetch_candidate_products(exclude_ids: list[str] | None = None) -> list[dict]
         WHERE status = 'approved'
         {exclude_clause}
     """
-    with get_connection() as conn, conn.cursor() as cur:
-        with conn.cursor() as cur:
-            cur.execute(query, params)
-            return cur.fetchall()
+    with get_connection() as conn, conn.cursor() as cur, conn.cursor() as cur:
+        cur.execute(query, params)
+        return cur.fetchall()
 
 
 def fetch_products_by_ids(product_ids: list[str]) -> list[dict]:
@@ -87,10 +84,9 @@ def fetch_products_by_ids(product_ids: list[str]) -> list[dict]:
         FROM products
         WHERE id = ANY(%s)
     """
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query, (product_ids,))
-            return cur.fetchall()
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(query, (product_ids,))
+        return cur.fetchall()
 
 
 def fetch_popular_by_categories(category_ids: list[int], limit: int = 10) -> list[str]:
@@ -103,10 +99,9 @@ def fetch_popular_by_categories(category_ids: list[int], limit: int = 10) -> lis
             ORDER BY view_count DESC
             LIMIT %s
         """
-        with get_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(query, (limit,))
-                return [row["id"] for row in cur.fetchall()]
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.execute(query, (limit,))
+            return [row["id"] for row in cur.fetchall()]
 
     query = """
         SELECT id FROM products
@@ -114,10 +109,9 @@ def fetch_popular_by_categories(category_ids: list[int], limit: int = 10) -> lis
         ORDER BY view_count DESC
         LIMIT %s
     """
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query, (category_ids, limit))
-            return [row["id"] for row in cur.fetchall()]
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(query, (category_ids, limit))
+        return [row["id"] for row in cur.fetchall()]
 
 
 def get_category_of_products(product_ids: list[str]) -> list[int]:
@@ -129,10 +123,9 @@ def get_category_of_products(product_ids: list[str]) -> list[int]:
         FROM products
         WHERE id = ANY(%s)
     """
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query, (product_ids,))
-            return [row["category_id"] for row in cur.fetchall()]
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(query, (product_ids,))
+        return [row["category_id"] for row in cur.fetchall()]
 
 
 def upsert_recommendations(user_id: str, product_ids: list[str], strategy: str) -> None:

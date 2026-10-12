@@ -1,4 +1,6 @@
 """FastAPI entry point — El Marché recommender."""
+import logging
+
 from fastapi import FastAPI, Header, HTTPException, Query
 
 from app.config import settings
@@ -6,8 +8,9 @@ from app.db import upsert_recommendations
 from app.recommender import recommend
 from app.schemas import HealthResponse, RecommendationResponse
 
-app = FastAPI(title="El Marché recommender")
+logger = logging.getLogger(__name__)
 
+app = FastAPI(title="El Marché recommender")
 
 def _check_internal_key(x_internal_key: str | None) -> None:
     """Verify the internal API key sent by the Next.js server."""
@@ -34,10 +37,11 @@ def get_recommendations(
 
     product_ids, strategy = recommend(user_id, limit)
 
-        # Cache the result (best effort; don't fail the request if it errors)
+    # Cache the result (best effort; don't fail the request if it errors)
     try:
         upsert_recommendations(user_id, product_ids, strategy)
-    except Exception:  # noqa: BLE001 — cache write must never break the response
-        pass
-
+    except Exception:
+        # Cache writes are best-effort: a failure here must never break the
+        # API response, so we log it and move on.
+        logger.exception("Failed to cache recommendations for user %s", user_id)   
     return RecommendationResponse(productIds=product_ids, strategy=strategy)
