@@ -141,7 +141,7 @@ def recommend(user_id: str, limit: int) -> tuple[list[str], str]:
         return _fallback(user_id, limit, interacted_ids)
 
     top_indices = np.argsort(similarities)[::-1][:limit]
-    top_ids = [candidates[i]["id"] for i in top_indices if similarities[i] > 0]
+    top_ids = [str(candidates[i]["id"]) for i in top_indices if similarities[i] > 0]
 
     if not top_ids:
         return _fallback(user_id, limit, interacted_ids)
@@ -153,6 +153,6 @@ def _fallback(user_id: str, limit: int, interacted_ids: list[str]) -> tuple[list
     """Popularity fallback: most-viewed products in the user's most-viewed categories."""
     category_ids = get_category_of_products(interacted_ids) if interacted_ids else []
     product_ids = fetch_popular_by_categories(category_ids, limit)
-    # Don't recommend what they already saw
-    product_ids = [pid for pid in product_ids if pid not in interacted_ids][:limit]
+    # Don't recommend what they already saw; convert UUIDs to strings
+    product_ids = [str(pid) for pid in product_ids if str(pid) not in interacted_ids][:limit]
     return product_ids, "fallback"

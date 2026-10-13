@@ -28,3 +28,33 @@ def test_cosine_similarity_zero_vector():
     m = np.array([[1.0, 0.0, 0.0]])
     sims = _cosine_similarity(v, m)
     assert sims[0] == 0.0
+
+
+def test_recommend_without_key_returns_401():
+    """Missing X-Internal-Key header returns 401."""
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    client = TestClient(app)
+    response = client.get("/recommend/00000000-0000-0000-0000-000000000000?limit=5")
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Invalid internal key"}
+
+
+def test_recommend_with_wrong_key_returns_401():
+    """Wrong X-Internal-Key header returns 401."""
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    client = TestClient(app)
+    response = client.get(
+        "/recommend/00000000-0000-0000-0000-000000000000?limit=5",
+        headers={"X-Internal-Key": "wrong-key"},
+    )
+
+    assert response.status_code == 401
+
+
