@@ -1,6 +1,7 @@
 """PostgreSQL connection using psycopg (Supabase)."""
 from collections.abc import Iterator
 from contextlib import contextmanager
+from typing import Any
 
 import psycopg
 from psycopg.rows import dict_row
@@ -14,7 +15,8 @@ def get_connection() -> Iterator[psycopg.Connection]:
     conn = psycopg.connect(
         settings.database_url,
         row_factory=dict_row,
-        connect_timeout=5,  # ← fail fast instead of hanging
+        connect_timeout=5,
+        prepare_threshold=None,  # required for Supabase pooler (port 6543)
     )
     try:
         yield conn
@@ -22,7 +24,7 @@ def get_connection() -> Iterator[psycopg.Connection]:
         conn.close()
 
 
-def fetch_user_events(user_id: str, limit: int = 50) -> list[dict]:
+def fetch_user_events(user_id: str, limit: int = 50) -> list[dict[str, Any]]:
     """
     Fetch the user's recent interactions (views + favorites).
     Returns a list of { product_id, event_type } ordered by recency.
@@ -30,30 +32,30 @@ def fetch_user_events(user_id: str, limit: int = 50) -> list[dict]:
     query = """
         SELECT product_id, event_type
         FROM product_views
-        WHERE user_id = %s
+        WHERE user_id = %s::uuid
         ORDER BY created_at DESC
         LIMIT %s
     """
-    with get_connection() as conn, conn.cursor() as cur, conn.cursor() as cur:
+    with get_connection() as conn, conn.cursor() as cur:
         cur.execute(query, (user_id, limit))
         return cur.fetchall()
 
 
-def fetch_user_searches(user_id: str, limit: int = 20) -> list[dict]:
+def fetch_user_searches(user_id: str, limit: int = 20) -> list[dict[str, Any]]:
     """Fetch the user's recent search queries."""
     query = """
         SELECT query
         FROM searches
-        WHERE user_id = %s
+        WHERE user_id = %s::uuid
         ORDER BY created_at DESC
         LIMIT %s
     """
-    with get_connection() as conn, conn.cursor() as cur, conn.cursor() as cur:
+    with get_connection() as conn, conn.cursor() as cur:
         cur.execute(query, (user_id, limit))
         return cur.fetchall()
 
 
-def fetch_candidate_products(exclude_ids: list[str] | None = None) -> list[dict]:
+def fetch_candidate_products(exclude_ids: list[str] | None = None) -> list[dict[str, Any]]:
     """
     Fetch all approved products with the fields we need for similarity.
     Excludes products the user already interacted with.
@@ -61,7 +63,7 @@ def fetch_candidate_products(exclude_ids: list[str] | None = None) -> list[dict]
     exclude_clause = ""
     params: tuple = ()
     if exclude_ids:
-        exclude_clause = "AND id != ALL(%s)"
+        exclude_clause = "AND id != ALL(%s::uuid[])"
         params = (exclude_ids,)
 
     query = f"""
@@ -70,19 +72,19 @@ def fetch_candidate_products(exclude_ids: list[str] | None = None) -> list[dict]
         WHERE status = 'approved'
         {exclude_clause}
     """
-    with get_connection() as conn, conn.cursor() as cur, conn.cursor() as cur:
+    with get_connection() as conn, conn.cursor() as cur:
         cur.execute(query, params)
         return cur.fetchall()
 
 
-def fetch_products_by_ids(product_ids: list[str]) -> list[dict]:
+def fetch_products_by_ids(product_ids: list[str]) -> list[dict[str, Any]]:
     """Fetch full product rows by their IDs."""
     if not product_ids:
         return []
     query = """
         SELECT id, category_id, price_dzd, tags, view_count
         FROM products
-        WHERE id = ANY(%s)
+        WHERE id = ANY(%s::uuid[])
     """
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(query, (product_ids,))
@@ -121,7 +123,7 @@ def get_category_of_products(product_ids: list[str]) -> list[int]:
     query = """
         SELECT DISTINCT category_id
         FROM products
-        WHERE id = ANY(%s)
+        WHERE id = ANY(%s::uuid[])
     """
     with get_connection() as conn, conn.cursor() as cur:
         cur.execute(query, (product_ids,))
@@ -129,17 +131,17 @@ def get_category_of_products(product_ids: list[str]) -> list[int]:
 
 
 def upsert_recommendations(user_id: str, product_ids: list[str], strategy: str) -> None:
-    """Write the result to recommendations_cache."""
+    """Write the result to recommendations_cache. Silently skips unknown users."""
     query = """
         INSERT INTO recommendations_cache (user_id, product_ids, strategy, computed_at)
-        VALUES (%s, %s, %s, NOW())
+        SELECT %s::uuid, %s::uuid[], %s, NOW()
+        WHERE EXISTS (SELECT 1 FROM profiles WHERE id = %s::uuid)
         ON CONFLICT (user_id)
         DO UPDATE SET
             product_ids = EXCLUDED.product_ids,
             strategy = EXCLUDED.strategy,
             computed_at = EXCLUDED.computed_at
     """
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(query, (user_id, product_ids, strategy))
+    with get_connection() as conn, conn.cursor() as cur:
+        cur.execute(query, (user_id, product_ids, strategy, user_id))
         conn.commit()
