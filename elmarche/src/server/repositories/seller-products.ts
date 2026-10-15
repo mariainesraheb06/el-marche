@@ -20,7 +20,7 @@ export async function getSellerProfile(userId: string) {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("role, whatsapp_number")
+    .select("role, whatsapp_number, shop_name, full_name, wilaya_code")
     .eq("id", userId)
     .maybeSingle();
   if (error) throw error;

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
@@ -34,6 +35,12 @@ export default async function ProfilePage() {
         <p className="text-sm text-muted-foreground">{user.email}</p>
         <p className="text-sm text-primary">{ROLE_LABELS[profile?.role ?? "buyer"]}</p>
       </div>
+
+      {(profile?.role === "seller" || profile?.role === "admin") && (
+        <Button asChild className="w-full">
+          <Link href="/dashboard">Mon tableau de bord</Link>
+        </Button>
+      )}
 
       <form action={logout}>
         <Button type="submit" variant="outline" className="w-full">

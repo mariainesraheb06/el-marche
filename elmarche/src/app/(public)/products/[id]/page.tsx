@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MapPin, Phone, ShoppingBag } from "lucide-react";
 import { BackButton } from "@/components/layout/back-button";
+import { ViewTracker } from "@/components/product/view-tracker";
 import { wilayaName } from "@/lib/constants/wilayas";
 import { formatPrice, whatsappLink } from "@/lib/format";
 import { productIdSchema } from "@/lib/validators/products";
@@ -24,6 +25,8 @@ export default async function ProductPage({ params }: { params: { id: string } }
 
   return (
     <article className="pb-8 md:px-6 md:pt-6">
+      <ViewTracker productId={product.id} />
+
       <div className="flex items-center gap-2 px-4 py-3 md:px-0">
         <BackButton fallbackHref="/search" />
         <span className="font-heading text-lg font-bold md:hidden">Détails du produit</span>

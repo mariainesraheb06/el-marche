@@ -81,3 +81,21 @@ export async function deleteSellerProduct(userId: string, id: string) {
     await removeStorageFiles(paths).catch(() => undefined);
   }
 }
+
+export async function getSellerAccess(userId: string) {
+  try {
+    return await requireSeller(userId);
+  } catch (error) {
+    if (error instanceof ServiceError && error.code === "forbidden") return null;
+    throw error;
+  }
+}
+
+export async function getSellerDashboard(userId: string) {
+  const profile = await getSellerAccess(userId);
+  if (!profile) return null;
+
+  const products = await listOwnProducts(userId);
+  const totalViews = products.reduce((sum, product) => sum + product.viewCount, 0);
+  return { profile, products, totalViews };
+}
