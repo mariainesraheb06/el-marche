@@ -45,8 +45,8 @@ Images are uploaded straight from the browser to the Supabase Storage bucket `pr
 | Route                              | Description                                                                        | Response                     |
 | ---------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------- |
 | `GET /api/seller/products`         | My listings, all statuses                                                          | `{ items: SellerProduct[] }` |
-| `POST /api/seller/products`        | Body: `{ title, description, priceDzd, categoryId, wilayaCode, tags, imagePaths }` | 201 `Product`                |
-| `PATCH /api/seller/products/{id}`  | Same fields, all optional. Only my own products.                                   | `Product`                    |
+| `POST /api/seller/products`        | Body: `{ title, description, priceDzd, categoryId, wilayaCode, tags, imagePaths }` | 201 `{ id }`                |
+| `PATCH /api/seller/products/{id}`  | Same fields, all optional. Only my own products.                                   | `{ id }`                    |
 | `DELETE /api/seller/products/{id}` | Deletes the product and its stored images. Only my own.                            | 204                          |
 
 Validation: title 3–120 characters, description 10–4000, `priceDzd` an integer > 0, `wilayaCode` a valid code, `tags` at most 10 strings of up to 30 characters, `imagePaths` 3 to 5 items belonging to my folder. A seller must have a `whatsappNumber` in their profile (8–15 digits, optional leading `+`, international format such as `+213…`) before publishing.
