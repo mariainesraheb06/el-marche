@@ -9,7 +9,9 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "seed": "node scripts/seed.mjs",
+    "seed:apply": "node scripts/seed.mjs --apply"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
