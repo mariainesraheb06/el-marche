@@ -1,7 +1,15 @@
-import { getProductById, listProducts, logSearch } from "@/server/repositories/products";
+import {
+  getProductById,
+  listProducts,
+  listSimilarProducts,
+  logSearch,
+} from "@/server/repositories/products";
 import type { ProductsQuery } from "@/lib/validators/products";
 
-export async function searchProducts(query: ProductsQuery, userId: string | null) {
+export async function searchProducts(
+  query: ProductsQuery,
+  userId: string | null,
+) {
   const { items, total } = await listProducts(query);
 
   // Log the search for analytics and recommendations (first page only, never block the response).
@@ -18,4 +26,8 @@ export async function searchProducts(query: ProductsQuery, userId: string | null
 
 export async function getProduct(id: string) {
   return getProductById(id);
+}
+
+export async function getSimilarProducts(productId: string) {
+  return listSimilarProducts(productId);
 }
