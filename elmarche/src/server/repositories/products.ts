@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { toTsQuery } from "@/lib/search";
 import type { ProductsQuery } from "@/lib/validators/products";
+import type { ProductSummary } from "@/types/api";
 
 const IMAGE_BUCKET = "product-images";
 
@@ -155,4 +156,54 @@ export async function logSearch(userId: string, query: string) {
     .from("searches")
     .insert({ user_id: userId, query: query.slice(0, 200) });
   if (error) throw error;
+}
+
+export async function listSimilarProducts(
+  productId: string,
+  limit = 8,
+): Promise<ProductSummary[]> {
+  const supabase = createClient();
+
+  // 1. Get the source product's category + price
+  const { data: source, error: sourceError } = await supabase
+    .from("products")
+    .select("category_id, price_dzd")
+    .eq("id", productId)
+    .eq("status", "approved")
+    .maybeSingle();
+
+  if (sourceError) throw sourceError;
+  if (!source) return [];
+
+  // 2. Fetch other approved products in the same category, ordered by popularity
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      "id, title, price_dzd, wilaya_code, created_at, categories!inner(slug), product_images(id, storage_path, position), profiles!seller_id(shop_name, full_name)",
+    )
+    .eq("status", "approved")
+    .eq("category_id", source.category_id)
+    .neq("id", productId)
+    .order("view_count", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+
+  const rows = (data ?? []) as unknown as SummaryRow[];
+  return rows.map((row) => {
+    const first = sortedImages(row.product_images)[0];
+    return {
+      id: row.id,
+      title: row.title,
+      priceDzd: row.price_dzd,
+      wilayaCode: row.wilaya_code,
+      categorySlug: row.categories.slug,
+      imageUrl: first
+        ? imageUrl(supabase, first.storage_path)
+        : null,
+      shopName: row.profiles?.shop_name ?? row.profiles?.full_name ?? null,
+      createdAt: row.created_at,
+    };
+  });
 }
