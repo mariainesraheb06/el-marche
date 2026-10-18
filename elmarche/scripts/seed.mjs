@@ -1,17 +1,21 @@
 // Seed script for El Marché (development and demo data).
 // Run from the elmarche folder:
-//   npm run seed         dry run: checks the data and the photos, writes nothing
-//   npm run seed:apply   creates accounts, products, photos and the demo history
+//   npm run seed:photos                       downloads the product photos (once)
+//   npm run seed                              dry run: checks the data and the photos, writes nothing
+//   npm run seed:apply                        creates accounts, products, photos and the demo history
+//   npm run seed:apply -- --refresh-images    also replaces the photos of products that already exist
 // Safe to run again: existing accounts and products are skipped.
 
 import { randomUUID } from "node:crypto";
 import { access, readFile } from "node:fs/promises";
 import { createClient } from "@supabase/supabase-js";
 import { BUYERS, CATEGORIES, SELLERS } from "./seed-data.mjs";
+import { PRODUCTS } from "./seed-catalog.mjs";
 
 const APPLY = process.argv.includes("--apply");
+const REFRESH = process.argv.includes("--refresh-images");
 const BUCKET = "product-images";
-const IMAGES_DIR = new URL("../../scripts/seed/images/", import.meta.url);
+const PHOTOS_DIR = new URL("../../scripts/seed/photos/", import.meta.url);
 const MAX_WILAYA = 58;
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -31,38 +35,15 @@ function normalizePhone(raw) {
   return /^\+[1-9]\d{7,14}$/.test(international) ? international : null;
 }
 
-const STOPWORDS = new Set(["pour", "avec", "dans", "sans", "chez", "lots", "pièces", "pièce"]);
-
-function makeTags(category, title) {
-  const words = title
-    .toLowerCase()
-    .replace(/[(),:.'’]/g, " ")
-    .split(/\s+/)
-    .filter((word) => word.length > 3 && !STOPWORDS.has(word) && !/^\d+$/.test(word));
-  return [...new Set([category.tag, ...words])].slice(0, 6).map((tag) => tag.slice(0, 30));
+async function loadManifest() {
+  try {
+    return JSON.parse(await readFile(new URL("manifest.json", PHOTOS_DIR), "utf8"));
+  } catch {
+    return {};
+  }
 }
 
-function imageNames(product) {
-  const first = (product.index % 2) + 1;
-  const second = first === 1 ? 2 : 1;
-  const prefix = product.category.imagePrefix;
-  return [`${prefix}-${first}.jpg`, `${prefix}-${second}.jpg`];
-}
-
-const products = CATEGORIES.flatMap((category) =>
-  category.items.map(([title, description, price, wilaya, shopKey], index) => ({
-    category,
-    index,
-    title,
-    description,
-    price,
-    wilaya,
-    shop: shopKey ?? category.shops[index % category.shops.length],
-    tags: makeTags(category, title),
-  })),
-);
-
-async function checkInputs() {
+async function checkInputs(manifest) {
   const problems = [];
 
   for (const name of [
@@ -83,7 +64,8 @@ async function checkInputs() {
   }
 
   const titles = new Set();
-  for (const product of products) {
+  const slugs = new Set();
+  for (const product of PRODUCTS) {
     const label = `"${product.title}"`;
     if (product.title.length < 3 || product.title.length > 120) problems.push(`${label}: title length`);
     if (product.description.length < 10 || product.description.length > 4000) {
@@ -95,9 +77,11 @@ async function checkInputs() {
     }
     if (!SELLERS[product.shop]) problems.push(`${label}: unknown shop "${product.shop}"`);
     if (titles.has(product.title)) problems.push(`${label}: duplicate title`);
+    if (slugs.has(product.slug)) problems.push(`${label}: duplicate slug`);
     titles.add(product.title);
+    slugs.add(product.slug);
   }
-  if (products.length < 150) problems.push(`Only ${products.length} products (150 needed)`);
+  if (PRODUCTS.length < 150) problems.push(`Only ${PRODUCTS.length} products (150 needed)`);
 
   for (const buyer of Object.values(BUYERS)) {
     for (const title of [...buyer.viewed, ...buyer.favorites]) {
@@ -105,15 +89,21 @@ async function checkInputs() {
     }
   }
 
-  for (const category of CATEGORIES) {
-    for (const n of [1, 2]) {
-      const name = `${category.imagePrefix}-${n}.jpg`;
+  let withoutPhotos = 0;
+  for (const product of PRODUCTS) {
+    const files = manifest[product.slug]?.files ?? [];
+    let complete = files.length > 0;
+    for (const file of files) {
       try {
-        await access(new URL(name, IMAGES_DIR));
+        await access(new URL(file, PHOTOS_DIR));
       } catch {
-        problems.push(`Missing photo scripts/seed/images/${name}`);
+        complete = false;
       }
     }
+    if (!complete) withoutPhotos += 1;
+  }
+  if (withoutPhotos > 0) {
+    problems.push(`${withoutPhotos} products have no photos on this computer: run npm run seed:photos first`);
   }
   return problems;
 }
@@ -137,7 +127,8 @@ async function pool(items, size, worker) {
 }
 
 async function main() {
-  const problems = await checkInputs();
+  const manifest = await loadManifest();
+  const problems = await checkInputs(manifest);
   if (problems.length > 0) {
     console.error("Cannot continue:");
     for (const problem of problems.slice(0, 30)) console.error(`  - ${problem}`);
@@ -147,11 +138,12 @@ async function main() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   console.log(`Target project: ${new URL(url).host}`);
   console.log(
-    `Products: ${products.length} in ${CATEGORIES.length} categories, ` +
+    `Products: ${PRODUCTS.length} in ${CATEGORIES.length} categories, ` +
       `${Object.keys(SELLERS).length} shops, ${Object.keys(BUYERS).length} demo buyers`,
   );
   for (const category of CATEGORIES) {
-    console.log(`  ${category.slug}: ${category.items.length}`);
+    const count = PRODUCTS.filter((product) => product.category.slug === category.slug).length;
+    console.log(`  ${category.slug}: ${count}`);
   }
 
   if (!APPLY) {
@@ -237,20 +229,7 @@ async function main() {
   }
   console.log(`\nAccounts ready: ${Object.keys(sellerIds).length} sellers, ${Object.keys(buyerIds).length} buyers`);
 
-  // 3. Base photos, uploaded once; every product then gets its own server-side copy.
-  for (const category of CATEGORIES) {
-    for (const n of [1, 2]) {
-      const name = `${category.imagePrefix}-${n}.jpg`;
-      const body = await readFile(new URL(name, IMAGES_DIR));
-      const { error } = await supabase.storage
-        .from(BUCKET)
-        .upload(`_seed/${name}`, body, { contentType: "image/jpeg", upsert: true });
-      if (error) throw error;
-    }
-  }
-  console.log("Base photos uploaded: 20");
-
-  // 4. Products
+  // 3. Products and their photos
   const { data: existingProducts, error: existingError } = await supabase
     .from("products")
     .select("id, title")
@@ -258,11 +237,65 @@ async function main() {
   if (existingError) throw existingError;
   const idByTitle = new Map(existingProducts.map((row) => [row.title, row.id]));
 
-  let done = 0;
-  async function createProduct(product, position) {
-    if (idByTitle.has(product.title)) return "existing";
+  const { data: imageRows, error: imageRowsError } = await supabase
+    .from("product_images")
+    .select("product_id, products!inner(seller_id)")
+    .in("products.seller_id", Object.values(sellerIds));
+  if (imageRowsError) throw imageRowsError;
+  const hasImages = new Set(imageRows.map((row) => row.product_id));
 
+  async function uploadImages(product, sellerId, productId) {
+    const uploaded = [];
+    try {
+      const rows = [];
+      for (const [i, file] of manifest[product.slug].files.entries()) {
+        const body = await readFile(new URL(file, PHOTOS_DIR));
+        const destination = `${sellerId}/${randomUUID()}.jpg`;
+        const { error } = await supabase.storage
+          .from(BUCKET)
+          .upload(destination, body, { contentType: "image/jpeg" });
+        if (error) throw error;
+        uploaded.push(destination);
+        rows.push({ product_id: productId, storage_path: destination, position: i + 1 });
+      }
+      const { error: insertError } = await supabase.from("product_images").insert(rows);
+      if (insertError) throw insertError;
+    } catch (error) {
+      if (uploaded.length > 0) await supabase.storage.from(BUCKET).remove(uploaded);
+      throw error;
+    }
+  }
+
+  async function replaceImages(product, sellerId, productId) {
+    const { data: old, error } = await supabase
+      .from("product_images")
+      .select("storage_path")
+      .eq("product_id", productId);
+    if (error) throw error;
+    if (old.length > 0) {
+      await supabase.storage.from(BUCKET).remove(old.map((row) => row.storage_path));
+      const { error: deleteError } = await supabase
+        .from("product_images")
+        .delete()
+        .eq("product_id", productId);
+      if (deleteError) throw deleteError;
+    }
+    await uploadImages(product, sellerId, productId);
+  }
+
+  let done = 0;
+  async function processProduct(product, position) {
     const sellerId = sellerIds[product.shop];
+    const existingId = idByTitle.get(product.title);
+
+    if (existingId) {
+      if (!REFRESH && hasImages.has(existingId)) return "existing";
+      await replaceImages(product, sellerId, existingId);
+      done += 1;
+      if (done % 20 === 0) console.log(`  ${done} products processed...`);
+      return "refreshed";
+    }
+
     const createdAt = new Date(Date.now() - ((position * 7) % 40) * DAY - ((position * 37) % 24) * HOUR);
     const { data, error } = await supabase
       .from("products")
@@ -282,43 +315,41 @@ async function main() {
     if (error) throw error;
 
     const productId = data.id;
-    const copied = [];
     try {
-      const rows = [];
-      for (const [i, name] of imageNames(product).entries()) {
-        const destination = `${sellerId}/${randomUUID()}.jpg`;
-        const { error: copyError } = await supabase.storage
-          .from(BUCKET)
-          .copy(`_seed/${name}`, destination);
-        if (copyError) throw copyError;
-        copied.push(destination);
-        rows.push({ product_id: productId, storage_path: destination, position: i + 1 });
-      }
-      const { error: imageError } = await supabase.from("product_images").insert(rows);
-      if (imageError) throw imageError;
-    } catch (error) {
+      await uploadImages(product, sellerId, productId);
+    } catch (uploadError) {
       await supabase.from("products").delete().eq("id", productId);
-      if (copied.length > 0) await supabase.storage.from(BUCKET).remove(copied);
-      throw error;
+      throw uploadError;
     }
 
     idByTitle.set(product.title, productId);
     done += 1;
-    if (done % 20 === 0) console.log(`  ${done} products created...`);
+    if (done % 20 === 0) console.log(`  ${done} products processed...`);
     return "created";
   }
 
-  const results = await pool(products, 4, createProduct);
+  const results = await pool(PRODUCTS, 3, processProduct);
   const created = results.filter((result) => result === "created").length;
+  const refreshed = results.filter((result) => result === "refreshed").length;
   const skipped = results.filter((result) => result === "existing").length;
   const failures = results.filter((result) => result instanceof Error);
-  console.log(`Products: ${created} created, ${skipped} already there, ${failures.length} failed`);
+  console.log(
+    `Products: ${created} created, ${refreshed} photos replaced, ${skipped} already fine, ${failures.length} failed`,
+  );
   for (const failure of failures.slice(0, 5)) console.error(`  - ${failure.message}`);
   if (failures.length > 0) {
     console.error("Some products failed. Run the command again: it only retries the missing ones.");
   }
 
-  // 5. Demo history for the recommendations (replaces the previous demo history)
+  if (REFRESH) {
+    // Remove the generic category photos from the first version of the seed.
+    const legacy = CATEGORIES.flatMap((category) =>
+      [1, 2].map((n) => `_seed/${category.imagePrefix}-${n}.jpg`),
+    );
+    await supabase.storage.from(BUCKET).remove(legacy);
+  }
+
+  // 4. Demo history for the recommendations (replaces the previous demo history)
   const productId = (title) => {
     const id = idByTitle.get(title);
     if (!id) throw new Error(`Demo product not found in the database: ${title}`);
@@ -366,7 +397,9 @@ async function main() {
 
   console.log(`\nDemo accounts (password = SEED_DEMO_PASSWORD from your .env.local):`);
   for (const [key, seller] of Object.entries(SELLERS)) {
-    console.log(`  seller  ${seller.email}@${domain}  (${seller.shopName})${key === "sneaker" ? "  <- Karim, demo seller" : ""}`);
+    console.log(
+      `  seller  ${seller.email}@${domain}  (${seller.shopName})${key === "sneaker" ? "  <- Karim, demo seller" : ""}`,
+    );
   }
   for (const buyer of Object.values(BUYERS)) {
     console.log(`  buyer   ${buyer.email}@${domain}  (${buyer.fullName})`);

@@ -11,7 +11,9 @@
     "format": "prettier --write .",
     "test": "vitest run --passWithNoTests",
     "seed": "node scripts/seed.mjs",
-    "seed:apply": "node scripts/seed.mjs --apply"
+    "seed:apply": "node scripts/seed.mjs --apply",
+    "seed:photos": "node scripts/fetch-photos.mjs",
+    "seed:index": "node scripts/index-photos.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
