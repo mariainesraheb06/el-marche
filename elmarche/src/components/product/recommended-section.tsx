@@ -8,11 +8,11 @@ export function RecommendedSection({ products }: { products: ProductSummary[] })
 
   return (
     <section aria-labelledby="recommended-title" className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <h2 id="recommended-title" className="text-xl font-bold">
+      <div className="flex flex-wrap items-center justify-between gap-2 md:flex-nowrap md:gap-3">
+        <h2 id="recommended-title" className="text-lg font-bold md:text-xl">
           Recommandé pour vous
         </h2>
-        <span className="flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-primary-foreground">
+        <span className="flex items-center gap-1 rounded-md bg-primary text-[9px] px-2 py-1 font-bold uppercase tracking-wide text-primary-foreground md:text-[10px] md:px-2 md:py-1">
           <Sparkles className="h-3 w-3" aria-hidden />
           AI suggestion
         </span>
