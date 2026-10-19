@@ -3,11 +3,13 @@ import type { ProductSummary } from "@/types/api";
 
 type ProductGridProps = {
   products: ProductSummary[];
+  favoriteIds?: Set<string>;
   emptyMessage?: string;
 };
 
 export function ProductGrid({
   products,
+  favoriteIds,
   emptyMessage = "Aucun produit ne correspond à votre recherche.",
 }: ProductGridProps) {
   if (products.length === 0) {
@@ -21,7 +23,11 @@ export function ProductGrid({
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard
+          key={product.id}
+          product={product}
+          isFavorited={favoriteIds?.has(product.id) ?? false}
+        />
       ))}
     </div>
   );

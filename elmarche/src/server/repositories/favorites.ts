@@ -111,3 +111,14 @@ export async function productExists(productId: string): Promise<boolean> {
   if (error) throw error;
   return data !== null;
 }
+
+export async function listFavoriteIds(userId: string): Promise<Set<string>> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("favorites")
+    .select("product_id")
+    .eq("user_id", userId);
+
+  if (error) throw error;
+  return new Set((data ?? []).map((row) => row.product_id));
+}

@@ -10,9 +10,11 @@ import { formatPrice } from "@/lib/format";
 import { productsQuerySchema } from "@/lib/validators/products";
 import { getCurrentUserId } from "@/server/auth";
 import { searchProducts } from "@/server/services/products";
+import { listFavoriteIds } from "@/server/repositories/favorites";
 
 export const metadata = { title: "Recherche — El Marché" };
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const STEP = 12;
 const MAX_PAGE_SIZE = 50;
@@ -56,9 +58,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   const query = parsed.success ? parsed.data : productsQuerySchema.parse({ pageSize: STEP });
 
   const userId = await getCurrentUserId();
-  const result = await searchProducts(query, userId);
+  const [result, favoriteIds] = await Promise.all([
+    searchProducts(query, userId),
+    userId ? listFavoriteIds(userId) : Promise.resolve(new Set<string>()),
+  ]);
 
-  // The current filters, used to build the chip and "Voir plus" links.
   const base: Record<string, string> = {};
   if (query.q) base.q = query.q;
   if (query.category) base.category = query.category;
@@ -199,7 +203,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
         <p>Trier par : {sortLabel}</p>
       </div>
 
-      <ProductGrid products={result.items} />
+      <ProductGrid products={result.items} favoriteIds={favoriteIds} />
 
       {hasMore && (
         <Button

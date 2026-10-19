@@ -3,19 +3,30 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MapPin, Phone, ShoppingBag } from "lucide-react";
 import { BackButton } from "@/components/layout/back-button";
+import { FavoriteButton } from "@/components/product/favorite-button";
 import { ViewTracker } from "@/components/product/view-tracker";
+import { createClient } from "@/lib/supabase/server";
 import { wilayaName } from "@/lib/constants/wilayas";
 import { formatPrice, whatsappLink } from "@/lib/format";
 import { productIdSchema } from "@/lib/validators/products";
 import { getProduct } from "@/server/services/products";
+import { listFavoriteIds } from "@/server/repositories/favorites";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
   if (!productIdSchema.safeParse(params.id).success) notFound();
 
   const product = await getProduct(params.id);
   if (!product) notFound();
+
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const favoriteIds = user ? await listFavoriteIds(user.id) : new Set<string>();
+  const isFavorited = favoriteIds.has(product.id);
 
   const sellerName = product.seller?.shopName ?? product.seller?.fullName ?? null;
   const contact = product.seller?.whatsappNumber
@@ -128,6 +139,12 @@ export default async function ProductPage({ params }: { params: { id: string } }
               Le vendeur n&apos;a pas encore ajouté de numéro WhatsApp.
             </p>
           )}
+
+          <FavoriteButton
+            productId={product.id}
+            variant="full"
+            initialFavorited={isFavorited}
+          />
         </div>
       </div>
     </article>

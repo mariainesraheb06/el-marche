@@ -1,12 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin, ShoppingBag } from "lucide-react";
+import { FavoriteButton } from "@/components/product/favorite-button";
 import { categoryName } from "@/lib/constants/categories";
 import { wilayaName } from "@/lib/constants/wilayas";
 import { formatPrice } from "@/lib/format";
 import type { ProductSummary } from "@/types/api";
 
-export function ProductCard({ product }: { product: ProductSummary }) {
+type Props = {
+  product: ProductSummary;
+  isFavorited?: boolean;
+};
+
+export function ProductCard({ product, isFavorited = false }: Props) {
   const badge = categoryName(product.categorySlug);
   const wilaya = wilayaName(product.wilayaCode);
 
@@ -30,6 +36,12 @@ export function ProductCard({ product }: { product: ProductSummary }) {
             <span className="sr-only">Pas d&apos;image</span>
           </div>
         )}
+
+        {/* Favorite button — top-right overlay */}
+        <div className="absolute right-2 top-2 z-10">
+          <FavoriteButton productId={product.id} initialFavorited={isFavorited} />
+        </div>
+
         {badge && (
           <span className="absolute left-2 top-2 rounded-md bg-accent px-2 py-1 text-[11px] font-semibold text-accent-foreground">
             {badge}

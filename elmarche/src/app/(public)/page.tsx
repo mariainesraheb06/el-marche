@@ -9,14 +9,18 @@ import { productsQuerySchema } from "@/lib/validators/products";
 import { getCurrentUserId } from "@/server/auth";
 import { searchProducts } from "@/server/services/products";
 import { getRecommendedProducts } from "@/server/services/recommendations";
+import { listFavoriteIds } from "@/server/repositories/favorites";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function HomePage() {
   const userId = await getCurrentUserId();
-  const [latest, recommended] = await Promise.all([
+
+  const [latest, recommended, favoriteIds] = await Promise.all([
     searchProducts(productsQuerySchema.parse({ pageSize: 8 }), null),
     getRecommendedProducts(userId),
+    userId ? listFavoriteIds(userId) : Promise.resolve(new Set<string>()),
   ]);
 
   return (
@@ -53,7 +57,7 @@ export default async function HomePage() {
         <CategoryCircles />
       </section>
 
-      <RecommendedSection products={recommended} />
+      <RecommendedSection products={recommended} favoriteIds={favoriteIds} />
 
       <section aria-labelledby="latest-title" className="space-y-3">
         <div className="flex items-baseline justify-between gap-3">
@@ -64,7 +68,7 @@ export default async function HomePage() {
             Voir tout
           </Link>
         </div>
-        <ProductGrid products={latest.items} />
+        <ProductGrid products={latest.items} favoriteIds={favoriteIds} />
       </section>
 
       <section className="flex items-center gap-3 rounded-2xl border bg-card p-4">

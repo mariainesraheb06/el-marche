@@ -2,8 +2,12 @@ import { Sparkles } from "lucide-react";
 import { ProductGrid } from "@/components/product/product-grid";
 import type { ProductSummary } from "@/types/api";
 
-// Presentational only. The data comes from server/services/recommendations.ts (owner: Ilyes).
-export function RecommendedSection({ products }: { products: ProductSummary[] }) {
+type Props = {
+  products: ProductSummary[];
+  favoriteIds?: Set<string>;
+};
+
+export function RecommendedSection({ products, favoriteIds }: Props) {
   if (products.length === 0) return null;
 
   return (
@@ -17,7 +21,7 @@ export function RecommendedSection({ products }: { products: ProductSummary[] })
           AI suggestion
         </span>
       </div>
-      <ProductGrid products={products} />
+      <ProductGrid products={products} favoriteIds={favoriteIds} />
     </section>
   );
 }
