@@ -18,7 +18,7 @@ type ProductRow = {
   created_at: string;
   categories: { slug: string };
   product_images: { id: string; storage_path: string; position: number }[];
-  profiles: { shop_name: string | null; full_name: string | null } | null;
+  profiles: { id: string; shop_name: string | null; full_name: string | null } | null;
 };
 
 function imageUrl(
@@ -43,6 +43,7 @@ function rowToSummary(
     categorySlug: row.categories.slug,
     imageUrl: first ? imageUrl(supabase, first.storage_path) : null,
     shopName: row.profiles?.shop_name ?? row.profiles?.full_name ?? null,
+    sellerId: row.profiles?.id ?? null,
     createdAt: row.created_at,
   };
 }
@@ -56,7 +57,7 @@ async function fetchProductSummaries(
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, title, price_dzd, wilaya_code, created_at, categories!inner(slug), product_images(id, storage_path, position), profiles!seller_id(shop_name, full_name)",
+      "id, title, price_dzd, wilaya_code, created_at, categories!inner(slug), product_images(id, storage_path, position), profiles!seller_id(id, shop_name, full_name)",
     )
     .in("id", ids)
     .eq("status", "approved");
@@ -116,7 +117,7 @@ async function popularityFallback(): Promise<ProductSummary[]> {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, title, price_dzd, wilaya_code, created_at, categories!inner(slug), product_images(id, storage_path, position), profiles!seller_id(shop_name, full_name)",
+      "id, title, price_dzd, wilaya_code, created_at, categories!inner(slug), product_images(id, storage_path, position), profiles!seller_id(id, shop_name, full_name)",
     )
     .eq("status", "approved")
     .order("view_count", { ascending: false })

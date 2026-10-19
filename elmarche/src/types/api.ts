@@ -6,5 +6,6 @@ export type ProductSummary = {
   categorySlug: string;
   imageUrl: string | null;
   shopName: string | null;
+  sellerId: string | null;
   createdAt: string;
 };

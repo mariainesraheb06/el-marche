@@ -3,11 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MapPin, Phone, ShoppingBag } from "lucide-react";
 import { BackButton } from "@/components/layout/back-button";
+import { FavoriteButton } from "@/components/product/favorite-button";
 import { ViewTracker } from "@/components/product/view-tracker";
 import { wilayaName } from "@/lib/constants/wilayas";
 import { formatPrice, whatsappLink } from "@/lib/format";
 import { productIdSchema } from "@/lib/validators/products";
-import { getProduct } from "@/server/services/products";
+import { getProduct, getSimilarProducts } from "@/server/services/products";
+import { SimilarProducts } from "@/components/product/similar-products";
+import type { ProductSummary } from "@/types/api";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +25,14 @@ export default async function ProductPage({ params }: { params: { id: string } }
     ? whatsappLink(product.seller.whatsappNumber, product.title)
     : null;
   const wilaya = wilayaName(product.wilayaCode);
+
+  // Similar products are a nice-to-have: never break the product page if they fail.
+  let similarProducts: ProductSummary[] = [];
+  try {
+    similarProducts = await getSimilarProducts(product.id);
+  } catch {
+    similarProducts = [];
+  }
 
   return (
     <article className="pb-8 md:px-6 md:pt-6">
@@ -92,7 +103,16 @@ export default async function ProductPage({ params }: { params: { id: string } }
                 {sellerName.charAt(0).toUpperCase()}
               </span>
               <div>
-                <p className="font-semibold">{sellerName}</p>
+                {product.seller?.id ? (
+                  <Link
+                    href={`/sellers/${product.seller.id}`}
+                    className="text-primary hover:underline"
+                  >
+                    <p className="font-semibold">{sellerName}</p>
+                  </Link>
+                ) : (
+                  <p className="font-semibold">{sellerName}</p>
+                )}
                 <p className="text-xs text-muted-foreground">Boutique</p>
               </div>
             </div>
@@ -113,23 +133,28 @@ export default async function ProductPage({ params }: { params: { id: string } }
             </ul>
           )}
 
-          {contact ? (
-            <a
-              href={contact}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-whatsapp text-base font-semibold text-whatsapp-foreground transition-opacity hover:opacity-90"
-            >
-              <Phone className="h-5 w-5" aria-hidden />
-              Contacter le vendeur
-            </a>
-          ) : (
-            <p className="rounded-2xl bg-secondary p-4 text-sm text-muted-foreground">
-              Le vendeur n&apos;a pas encore ajouté de numéro WhatsApp.
-            </p>
-          )}
+          <div className="flex flex-col gap-3 sm:flex-row">
+            {contact ? (
+              <a
+                href={contact}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-whatsapp text-base font-semibold text-whatsapp-foreground transition-opacity hover:opacity-90"
+              >
+                <Phone className="h-5 w-5" aria-hidden />
+                Contacter le vendeur
+              </a>
+            ) : (
+              <p className="flex-1 rounded-2xl bg-secondary p-4 text-sm text-muted-foreground">
+                Le vendeur n&apos;a pas encore ajouté de numéro WhatsApp.
+              </p>
+            )}
+            <FavoriteButton productId={product.id} />
+          </div>
         </div>
       </div>
+
+      <SimilarProducts products={similarProducts} />
     </article>
   );
 }

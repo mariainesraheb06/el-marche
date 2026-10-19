@@ -15,7 +15,7 @@ type SummaryRow = {
   created_at: string;
   categories: { slug: string };
   product_images: ImageRow[];
-  profiles: { shop_name: string | null; full_name: string | null } | null;
+  profiles: { id: string; shop_name: string | null; full_name: string | null } | null;
 };
 
 type DetailRow = {
@@ -55,7 +55,7 @@ export async function listProducts(query: ProductsQuery) {
   let builder = supabase
     .from("products")
     .select(
-      "id, title, price_dzd, wilaya_code, created_at, categories!inner(slug), product_images(id, storage_path, position), profiles!seller_id(shop_name, full_name)",
+      "id, title, price_dzd, wilaya_code, created_at, categories!inner(slug), product_images(id, storage_path, position), profiles!seller_id(id, shop_name, full_name)",
       { count: "exact" },
     )
     .eq("status", "approved");
@@ -102,6 +102,7 @@ export async function listProducts(query: ProductsQuery) {
       categorySlug: row.categories.slug,
       imageUrl: first ? imageUrl(supabase, first.storage_path) : null,
       shopName: row.profiles?.shop_name ?? row.profiles?.full_name ?? null,
+      sellerId: row.profiles?.id ?? null,
       createdAt: row.created_at,
     };
   });
@@ -179,7 +180,7 @@ export async function listSimilarProducts(
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id, title, price_dzd, wilaya_code, created_at, categories!inner(slug), product_images(id, storage_path, position), profiles!seller_id(shop_name, full_name)",
+      "id, title, price_dzd, wilaya_code, created_at, categories!inner(slug), product_images(id, storage_path, position), profiles!seller_id(id, shop_name, full_name)",
     )
     .eq("status", "approved")
     .eq("category_id", source.category_id)
@@ -203,7 +204,50 @@ export async function listSimilarProducts(
         ? imageUrl(supabase, first.storage_path)
         : null,
       shopName: row.profiles?.shop_name ?? row.profiles?.full_name ?? null,
+      sellerId: row.profiles?.id ?? null,
       createdAt: row.created_at,
     };
   });
+}
+
+export async function listSellerApprovedProducts(
+  sellerId: string,
+  page = 1,
+  pageSize = 20,
+): Promise<{ items: ProductSummary[]; total: number }> {
+  const supabase = createClient();
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
+    .from("products")
+    .select(
+      "id, title, price_dzd, wilaya_code, created_at, categories!inner(slug), product_images(id, storage_path, position), profiles!seller_id(id, shop_name, full_name)",
+      { count: "exact" },
+    )
+    .eq("seller_id", sellerId)
+    .eq("status", "approved")
+    .order("created_at", { ascending: false })
+    .order("id")
+    .range(from, to);
+
+  if (error) throw error;
+
+  const rows = (data ?? []) as unknown as SummaryRow[];
+  const items = rows.map((row) => {
+    const first = sortedImages(row.product_images)[0];
+    return {
+      id: row.id,
+      title: row.title,
+      priceDzd: row.price_dzd,
+      wilayaCode: row.wilaya_code,
+      categorySlug: row.categories.slug,
+      imageUrl: first ? imageUrl(supabase, first.storage_path) : null,
+      shopName: row.profiles?.shop_name ?? row.profiles?.full_name ?? null,
+      sellerId: row.profiles?.id ?? null,
+      createdAt: row.created_at,
+    };
+  });
+
+  return { items, total: count ?? items.length };
 }

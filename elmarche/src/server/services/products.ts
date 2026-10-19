@@ -1,6 +1,7 @@
 import {
   getProductById,
   listProducts,
+  listSellerApprovedProducts,
   listSimilarProducts,
   logSearch,
 } from "@/server/repositories/products";
@@ -30,4 +31,8 @@ export async function getProduct(id: string) {
 
 export async function getSimilarProducts(productId: string) {
   return listSimilarProducts(productId);
+}
+
+export async function getSellerBoutique(sellerId: string, page = 1, pageSize = 20) {
+  return listSellerApprovedProducts(sellerId, page, pageSize);
 }

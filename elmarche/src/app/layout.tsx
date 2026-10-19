@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Caveat, Figtree, Fraunces } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-figtree" });
@@ -14,7 +15,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={`${figtree.variable} ${fraunces.variable} ${caveat.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

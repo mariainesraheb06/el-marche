@@ -12,7 +12,7 @@ type FavoriteRow = {
     created_at: string;
     categories: { slug: string };
     product_images: { storage_path: string; position: number }[];
-    profiles: { shop_name: string | null; full_name: string | null } | null;
+    profiles: { id: string; shop_name: string | null; full_name: string | null } | null;
   } | null;
 };
 
@@ -34,6 +34,7 @@ function toSummary(
           .publicUrl
       : null,
     shopName: row.profiles?.shop_name ?? row.profiles?.full_name ?? null,
+    sellerId: row.profiles?.id ?? null,
     createdAt: row.created_at,
   };
 }
@@ -45,7 +46,7 @@ export async function listFavoriteProducts(
   const { data, error } = await supabase
     .from("favorites")
     .select(
-      "products!inner(id, title, price_dzd, wilaya_code, created_at, status, categories!inner(slug), product_images(storage_path, position), profiles!seller_id(shop_name, full_name))",
+      "products!inner(id, title, price_dzd, wilaya_code, created_at, status, categories!inner(slug), product_images(storage_path, position), profiles!seller_id(id, shop_name, full_name))",
     )
     .eq("user_id", userId)
     .eq("products.status", "approved")
