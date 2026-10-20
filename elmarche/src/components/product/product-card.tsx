@@ -56,13 +56,13 @@ export function ProductCard({ product, isFavorited = false }: Props) {
         <h3 className="line-clamp-2 font-sans text-sm font-semibold leading-snug">
           {product.title}
         </h3>
-        <div className="mt-auto flex items-end justify-between gap-2 pt-1">
-          <p className="font-heading text-lg font-bold text-primary">
+        <div className="mt-auto flex flex-nowrap items-end justify-between gap-2 pt-1 md:flex-nowrap">
+          <p className="font-heading text-base font-bold text-primary whitespace-nowrap md:text-lg">
             {formatPrice(product.priceDzd)}
           </p>
           {wilaya && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="h-3.5 w-3.5" aria-hidden />
+            <span className="flex items-center gap-1 shrink-0 text-xs text-muted-foreground md:shrink">
+              <MapPin className="shrink-0 h-3.5 w-3.5 md:shrink" aria-hidden />
               {wilaya}
             </span>
           )}
