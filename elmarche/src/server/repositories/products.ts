@@ -207,3 +207,37 @@ export async function listSimilarProducts(
     };
   });
 }
+
+export async function listSellerApprovedProducts(sellerId: string, limit = 24) {
+  const supabase = createClient();
+  const { data, error, count } = await supabase
+    .from("products")
+    .select(
+      "id, title, price_dzd, wilaya_code, created_at, categories!inner(slug), product_images(id, storage_path, position), profiles!seller_id(shop_name, full_name)",
+      { count: "exact" },
+    )
+    .eq("status", "approved")
+    .eq("seller_id", sellerId)
+    .order("created_at", { ascending: false })
+    .order("id")
+    .limit(limit);
+
+  if (error) throw error;
+
+  const rows = (data ?? []) as unknown as SummaryRow[];
+  const items: ProductSummary[] = rows.map((row) => {
+    const first = sortedImages(row.product_images)[0];
+    return {
+      id: row.id,
+      title: row.title,
+      priceDzd: row.price_dzd,
+      wilayaCode: row.wilaya_code,
+      categorySlug: row.categories.slug,
+      imageUrl: first ? imageUrl(supabase, first.storage_path) : null,
+      shopName: row.profiles?.shop_name ?? row.profiles?.full_name ?? null,
+      createdAt: row.created_at,
+    };
+  });
+
+  return { items, total: count ?? items.length };
+}
