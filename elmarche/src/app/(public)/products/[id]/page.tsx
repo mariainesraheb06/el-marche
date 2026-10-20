@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MapPin, Phone, ShoppingBag } from "lucide-react";
@@ -9,8 +10,9 @@ import { createClient } from "@/lib/supabase/server";
 import { wilayaName } from "@/lib/constants/wilayas";
 import { formatPrice, whatsappLink } from "@/lib/format";
 import { productIdSchema } from "@/lib/validators/products";
-import { getProduct } from "@/server/services/products";
+import { getProduct, getSimilarProducts } from "@/server/services/products";
 import { listFavoriteIds } from "@/server/repositories/favorites";
+import { RecommendedSection } from "@/components/product/recommended-section";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -103,8 +105,8 @@ export default async function ProductPage({ params }: { params: { id: string } }
                 {sellerName.charAt(0).toUpperCase()}
               </span>
               <div>
-                <p className="font-semibold">{sellerName}</p>
-                <p className="text-xs text-muted-foreground">Boutique</p>
+                <Link href={`/sellers/${product.seller?.id}`} className="font-semibold hover:underline">{sellerName}</Link>
+                <Link href={`/sellers/${product.seller?.id}`} className="block text-xs text-primary hover:underline">Voir la boutique →</Link>
               </div>
             </div>
           )}
@@ -147,6 +149,26 @@ export default async function ProductPage({ params }: { params: { id: string } }
           />
         </div>
       </div>
+    <div className="px-4 pt-8 md:px-0">
+        <Suspense fallback={null}>
+          <SimilarSection productId={product.id} favoriteIds={favoriteIds} />
+        </Suspense>
+      </div>
     </article>
   );
+}
+
+async function SimilarSection({
+  productId,
+  favoriteIds,
+}: {
+  productId: string;
+  favoriteIds: Set<string>;
+}) {
+  try {
+    const items = await getSimilarProducts(productId);
+    return <RecommendedSection products={items} favoriteIds={favoriteIds} />;
+  } catch {
+    return null;
+  }
 }
