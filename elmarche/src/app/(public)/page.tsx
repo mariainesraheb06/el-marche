@@ -31,10 +31,18 @@ export default async function HomePage() {
       <section className="relative overflow-hidden rounded-2xl bg-primary px-6 py-8 text-primary-foreground md:px-10 md:py-14">
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-black/30"
+          className="absolute inset-0 bg-gradient-to-br from-primary via-[hsl(150_45%_16%)] to-[hsl(150_50%_9%)]"
         />
         <div aria-hidden className="zellige absolute inset-0 opacity-[0.07]" />
         <div aria-hidden className="float-slow absolute -right-16 -top-16 h-64 w-64 rounded-full bg-[radial-gradient(circle,hsl(var(--accent)/0.35),transparent_70%)]" />
+        <svg aria-hidden viewBox="0 0 100 100" className="spin-slow absolute -bottom-20 -right-16 h-72 w-72 text-primary-foreground/10 md:h-96 md:w-96">
+          <g fill="none" stroke="currentColor" strokeWidth="1">
+            <rect x="20" y="20" width="60" height="60" />
+            <rect x="20" y="20" width="60" height="60" transform="rotate(45 50 50)" />
+            <circle cx="50" cy="50" r="12" />
+            <circle cx="50" cy="50" r="30" />
+          </g>
+        </svg>
         <div className="relative max-w-xl space-y-4 fade-up">
           <h1 className="text-3xl font-bold leading-tight md:text-5xl">
             Soutenir les petites entreprises algériennes n&apos;a jamais été aussi simple.
@@ -56,8 +64,23 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section aria-labelledby="categories-title" className="space-y-3">
-        <h2 id="categories-title" className="text-xl font-bold">
+      <div aria-hidden className="marquee overflow-hidden rounded-full border border-primary/10 bg-primary/5 py-2 text-xs font-semibold uppercase tracking-widest text-primary">
+        <div className="marquee-track whitespace-nowrap">
+          {[0, 1].map((i) => (
+            <div key={i} className="flex gap-8 pr-8">
+              {["Artisanat", "Mode", "Bijoux", "Alimentation", "Beauté", "Maison", "Fait en Algérie"].map((w) => (
+                <span key={w} className="flex items-center gap-8">
+                  {w}
+                  <span className="h-1.5 w-1.5 rotate-45 bg-accent" />
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <section aria-labelledby="categories-title" className="reveal space-y-3">
+        <h2 id="categories-title" className="section-title text-xl font-bold">
           Explorer par catégorie
         </h2>
         <CategoryCircles />
@@ -65,9 +88,9 @@ export default async function HomePage() {
 
       <RecommendedSection products={recommended} favoriteIds={favoriteIds} />
 
-      <section aria-labelledby="latest-title" className="space-y-3">
+      <section aria-labelledby="latest-title" className="reveal space-y-3">
         <div className="flex items-baseline justify-between gap-3">
-          <h2 id="latest-title" className="text-xl font-bold">
+          <h2 id="latest-title" className="section-title text-xl font-bold">
             Nouveautés
           </h2>
           <Link href="/search" className="text-sm font-semibold text-primary">

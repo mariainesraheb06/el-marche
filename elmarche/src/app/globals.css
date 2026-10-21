@@ -74,3 +74,52 @@
   .float-slow, .fade-up { animation: none; }
 }
 
+
+/* ===== Redesign v2 ===== */
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+body {
+  background-image:
+    radial-gradient(48rem 32rem at 105% -5%, hsl(var(--accent) / 0.14), transparent 60%),
+    radial-gradient(44rem 36rem at -10% 25%, hsl(var(--primary) / 0.09), transparent 60%);
+  background-repeat: no-repeat;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg fill='none' stroke='%231a4d2e' stroke-width='1.2'%3E%3Crect x='20' y='20' width='40' height='40'/%3E%3Crect x='20' y='20' width='40' height='40' transform='rotate(45 40 40)'/%3E%3Ccircle cx='40' cy='40' r='6'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 80px 80px;
+}
+
+@layer utilities {
+  .spin-slow { animation: spin-slow 70s linear infinite; }
+  .marquee-track { display: flex; width: max-content; animation: marquee 32s linear infinite; }
+  .marquee:hover .marquee-track { animation-play-state: paused; }
+  .section-title::before {
+    content: "";
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-right: 0.6rem;
+    background: hsl(var(--accent));
+    transform: rotate(45deg);
+    vertical-align: middle;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: fade-up linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin-slow, .marquee-track, .reveal { animation: none; }
+}
