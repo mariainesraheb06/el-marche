@@ -33,10 +33,16 @@ export default async function HomePage() {
           aria-hidden
           className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-black/30"
         />
-        <div className="relative max-w-xl space-y-4">
+        <div aria-hidden className="zellige absolute inset-0 opacity-[0.07]" />
+        <div aria-hidden className="float-slow absolute -right-16 -top-16 h-64 w-64 rounded-full bg-[radial-gradient(circle,hsl(var(--accent)/0.35),transparent_70%)]" />
+        <div className="relative max-w-xl space-y-4 fade-up">
           <h1 className="text-3xl font-bold leading-tight md:text-5xl">
             Soutenir les petites entreprises algériennes n&apos;a jamais été aussi simple.
           </h1>
+          <div className="flex flex-wrap gap-2">
+            <span className="glass rounded-full px-3 py-1 text-xs font-semibold">Fait en Algérie</span>
+            <span className="glass rounded-full px-3 py-1 text-xs font-semibold">58 wilayas</span>
+          </div>
           <p className="text-sm text-primary-foreground/90 md:text-base">
             Tout l&apos;Algérie, en un seul endroit.
           </p>
