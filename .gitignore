@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.env
+.env*.local
+.venv/
+__pycache__/
+*.pyc
+.vercel/
+scripts/seed/photos/*.jpg
+scripts/seed/photos/review.html
+scripts/seed/photos/CHECKLIST.html
+scripts/seed/images/
