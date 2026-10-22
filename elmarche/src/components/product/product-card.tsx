@@ -19,7 +19,7 @@ export function ProductCard({ product, isFavorited = false }: Props) {
   return (
     <Link
       href={`/products/${product.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-primary/10 bg-card/90 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10"
     >
       <div className="relative aspect-[4/3] bg-secondary">
         {product.imageUrl ? (

@@ -34,7 +34,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navigation principale"
-      className="fixed inset-x-0 bottom-0 z-50 border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 border-t bg-card/85 backdrop-blur-md pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="mx-auto flex max-w-md items-stretch justify-around">
         {ITEMS.map((item) => {
@@ -65,7 +65,7 @@ export function DesktopNav() {
   const isActive = useIsActive();
 
   return (
-    <header className="sticky top-0 z-40 hidden border-b bg-card/95 backdrop-blur md:block">
+    <header className="sticky top-0 z-40 hidden border-b bg-card/80 backdrop-blur md:block">
       <div className="mx-auto flex max-w-6xl items-center gap-8 px-6 py-3">
         <Logo />
         <nav aria-label="Navigation principale" className="ml-auto flex items-center gap-6">
