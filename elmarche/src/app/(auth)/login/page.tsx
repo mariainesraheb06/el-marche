@@ -12,6 +12,7 @@ const ERRORS: Record<string, string> = {
 };
 const MESSAGES: Record<string, string> = {
   check_email: "Compte créé ! Confirmez votre adresse e-mail, puis connectez-vous.",
+  password_updated: "Mot de passe modifié. Connectez-vous avec le nouveau.",
 };
 
 export default function LoginPage({
@@ -57,6 +58,12 @@ export default function LoginPage({
           Se connecter
         </Button>
       </form>
+
+      <p className="text-center text-sm">
+        <Link href="/forgot-password" className="font-medium text-primary underline">
+          Mot de passe oublié ?
+        </Link>
+      </p>
 
       <p className="text-center text-sm text-muted-foreground">
         Pas encore de compte ?{" "}
