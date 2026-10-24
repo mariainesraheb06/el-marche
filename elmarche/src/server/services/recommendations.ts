@@ -2,7 +2,7 @@ import type { ProductSummary } from "@/types/api";
 import { createClient } from "@/lib/supabase/server";
 
 const IMAGE_BUCKET = "product-images";
-const RECOMMENDER_TIMEOUT_MS = 3000;
+const RECOMMENDER_TIMEOUT_MS = 4000;
 const DEFAULT_LIMIT = 10;
 
 type RecommenderResponse = {
