@@ -233,6 +233,7 @@ export type Database = {
           shop_name: string | null
           whatsapp_number: string | null
           wilaya_code: number | null
+          avatar_url: string | null
         }
         Insert: {
           created_at?: string
@@ -242,6 +243,7 @@ export type Database = {
           shop_name?: string | null
           whatsapp_number?: string | null
           wilaya_code?: number | null
+          avatar_url?: string | null
         }
         Update: {
           created_at?: string
@@ -251,6 +253,7 @@ export type Database = {
           shop_name?: string | null
           whatsapp_number?: string | null
           wilaya_code?: number | null
+          avatar_url?: string | null
         }
         Relationships: []
       }
