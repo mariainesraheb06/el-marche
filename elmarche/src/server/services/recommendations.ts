@@ -2,7 +2,7 @@ import type { ProductSummary } from "@/types/api";
 import { createClient } from "@/lib/supabase/server";
 
 const IMAGE_BUCKET = "product-images";
-const RECOMMENDER_TIMEOUT_MS = 3000;
+const RECOMMENDER_TIMEOUT_MS = 4000;
 const DEFAULT_LIMIT = 10;
 
 type RecommenderResponse = {
@@ -131,6 +131,63 @@ async function popularityFallback(): Promise<ProductSummary[]> {
   return rows.map((row) => rowToSummary(supabase, row));
 }
 
+async function personalizedFallback(userId: string): Promise<ProductSummary[]> {
+  try {
+    const supabase = createClient();
+    const [views, favs] = await Promise.all([
+      supabase
+        .from("product_views")
+        .select("product_id")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(50),
+      supabase.from("favorites").select("product_id").eq("user_id", userId).limit(50),
+    ]);
+
+    const weight = new Map<string, number>();
+    for (const row of views.data ?? []) {
+      weight.set(row.product_id, (weight.get(row.product_id) ?? 0) + 1);
+    }
+    // A favorite counts more than a view.
+    for (const row of favs.data ?? []) {
+      weight.set(row.product_id, (weight.get(row.product_id) ?? 0) + 3);
+    }
+    if (weight.size === 0) return popularityFallback();
+
+    const { data: seen } = await supabase
+      .from("products")
+      .select("id, category_id")
+      .in("id", Array.from(weight.keys()));
+
+    const byCategory = new Map<number, number>();
+    for (const row of seen ?? []) {
+      byCategory.set(
+        row.category_id,
+        (byCategory.get(row.category_id) ?? 0) + (weight.get(row.id) ?? 0),
+      );
+    }
+    const top = Array.from(byCategory.entries()).sort((a, b) => b[1] - a[1])[0];
+    if (!top) return popularityFallback();
+
+    const { data, error } = await supabase
+      .from("products")
+      .select(
+        "id, title, price_dzd, wilaya_code, created_at, categories!inner(slug), product_images(id, storage_path, position), profiles!seller_id(shop_name, full_name)",
+      )
+      .eq("status", "approved")
+      .eq("category_id", top[0])
+      .order("view_count", { ascending: false })
+      .limit(DEFAULT_LIMIT);
+
+    if (error || !data || data.length === 0) return popularityFallback();
+    console.warn("[recommendations] using personalized category fallback");
+    return (data as unknown as ProductRow[]).map((row) => rowToSummary(supabase, row));
+  } catch (err) {
+    console.warn("[recommendations] personalized fallback failed:", err);
+    return popularityFallback();
+  }
+}
+
 export async function getRecommendedProducts(
   userId: string | null,
 ): Promise<ProductSummary[]> {
@@ -143,7 +200,7 @@ export async function getRecommendedProducts(
 
   // If the recommender failed, or returned zero products, fall back.
   if (!recommender || recommender.productIds.length === 0) {
-    return popularityFallback();
+    return personalizedFallback(userId);
   }
 
   const products = await fetchProductSummaries(recommender.productIds);
@@ -151,7 +208,7 @@ export async function getRecommendedProducts(
   // If the recommender gave IDs but none are available anymore (e.g. unapproved),
   // fall back so the homepage never shows an empty section.
   if (products.length === 0) {
-    return popularityFallback();
+    return personalizedFallback(userId);
   }
 
   return products;
