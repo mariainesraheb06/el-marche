@@ -12,7 +12,10 @@ type Props = {
   onUploaded: (url: string) => void;
 };
 
-async function getCroppedImg(imageSrc: string, pixelCrop: any): Promise<Blob> {
+async function getCroppedImg(
+  imageSrc: string, 
+  pixelCrop: { x: number; y: number; width: number; height: number }
+): Promise<Blob> {
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.src = imageSrc;
