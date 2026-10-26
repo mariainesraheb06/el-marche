@@ -129,13 +129,13 @@ export default async function ProductPage({ params }: { params: { id: string } }
           )}
 
           {/* Buttons container */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <div className="flex flex-row gap-3 pt-2">
             {contact ? (
               <a
                 href={contact}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-whatsapp text-base font-semibold text-whatsapp-foreground transition-opacity hover:opacity-90 whitespace-nowrap"
+                className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-whatsapp text-sm md:text-base font-semibold text-whatsapp-foreground transition-opacity hover:opacity-90 whitespace-nowrap px-2 md:px-4"
               >
                 <Phone className="h-5 w-5" aria-hidden />
                 Contacter le vendeur
