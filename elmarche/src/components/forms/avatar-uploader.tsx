@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, Check, X } from "lucide-react";
 import { createBrowserClient } from "@supabase/ssr";
+import Cropper from "react-easy-crop";
 
 type Props = {
   userId: string;
@@ -11,22 +12,36 @@ type Props = {
   onUploaded: (url: string) => void;
 };
 
-// Crop to a centered square and shrink to 400 px, so uploads stay light.
-async function toSquareJpeg(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file);
-  const side = Math.min(bitmap.width, bitmap.height);
-  const sx = (bitmap.width - side) / 2;
-  const sy = (bitmap.height - side) / 2;
-  const size = Math.min(400, side);
+// Helper to crop the image using canvas based on the crop area
+async function getCroppedImg(imageSrc: string, pixelCrop: any): Promise<Blob> {
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.src = imageSrc;
+    img.onload = () => resolve(img);
+    img.onerror = (e) => reject(e);
+  });
+
   const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
   const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("canvas");
-  ctx.drawImage(bitmap, sx, sy, side, side, 0, 0, size, size);
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("blob"))), "image/jpeg", 0.85),
+  if (!ctx) throw new Error("No 2d context");
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
   );
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Canvas is empty"))), "image/jpeg", 0.85);
+  });
 }
 
 export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) {
@@ -35,8 +50,16 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleFile(file: File) {
-    setError(null);
+  // Cropper state
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
       setError("Format accepté : JPG, PNG ou WebP.");
       return;
@@ -45,29 +68,45 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
       setError("Image trop lourde (10 Mo maximum).");
       return;
     }
+
+    const reader = new FileReader();
+    reader.addEventListener("load", () => setImageToCrop(reader.result?.toString() || null));
+    reader.readAsDataURL(file);
+    e.target.value = ""; // reset input
+  }
+
+  async function handleSaveCrop() {
+    if (!imageToCrop || !croppedAreaPixels) return;
     setBusy(true);
+    setError(null);
+
     try {
-      const blob = await toSquareJpeg(file);
+      const blob = await getCroppedImg(imageToCrop, croppedAreaPixels);
       const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
       );
+      
       const path = `${userId}/${Date.now()}.jpg`;
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(path, blob, { contentType: "image/jpeg" });
+
       if (uploadError) throw uploadError;
 
       const publicUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+      
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ avatarUrl: publicUrl }),
       });
+      
       if (!res.ok) throw new Error("save");
 
       setUrl(publicUrl);
       onUploaded(publicUrl);
+      setImageToCrop(null); // close modal
     } catch {
       setError("Impossible d'envoyer la photo. Réessayez.");
     } finally {
@@ -77,6 +116,7 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
 
   return (
     <div className="flex flex-col items-center gap-2">
+      {/* Main Avatar Button */}
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
@@ -85,7 +125,6 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
         className="group relative h-24 w-24 overflow-hidden rounded-full border-2 border-primary/20 bg-secondary"
       >
         {url ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={url} alt="" className="h-full w-full object-cover" />
         ) : (
           <span className="flex h-full w-full items-center justify-center font-heading text-3xl font-bold text-primary">
@@ -102,17 +141,44 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
         accept="image/jpeg,image/png,image/webp"
         className="sr-only"
         tabIndex={-1}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) void handleFile(file);
-          e.target.value = "";
-        }}
+        onChange={handleFileSelect}
       />
       <p className="text-xs text-muted-foreground">Touchez la photo pour la changer</p>
-      {error && (
-        <p role="alert" className="text-xs text-destructive">
-          {error}
-        </p>
+      {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
+
+      {/* Crop Modal */}
+      {imageToCrop && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/80 p-4">
+          <div className="relative flex-1">
+            <Cropper
+              image={imageToCrop}
+              crop={crop}
+              zoom={zoom}
+              aspect={1} // Square crop
+              cropShape="round"
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={(_, croppedArea) => setCroppedAreaPixels(croppedArea)}
+            />
+          </div>
+          
+          <div className="mt-4 flex items-center justify-center gap-4">
+            <button
+              onClick={() => setImageToCrop(null)}
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-white"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <button
+              onClick={handleSaveCrop}
+              disabled={busy}
+              className="flex h-12 flex-1 max-w-[200px] items-center justify-center gap-2 rounded-full bg-primary font-semibold text-primary-foreground"
+            >
+              {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <Check className="h-5 w-5" />}
+              Enregistrer
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
