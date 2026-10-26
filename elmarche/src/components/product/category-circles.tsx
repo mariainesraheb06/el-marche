@@ -29,7 +29,7 @@ const ICONS: Record<string, LucideIcon> = {
 
 export function CategoryCircles() {
   return (
-    <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0 [scrollbar-width:none]">
+    <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:justify-center md:px-0 [scrollbar-width:none]">
       {CATEGORIES.map((category) => {
         const Icon = ICONS[category.slug] ?? Package;
         return (

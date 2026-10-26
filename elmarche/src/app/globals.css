@@ -123,3 +123,12 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   .spin-slow, .marquee-track, .reveal { animation: none; }
 }
+
+
+/* Force hide the scrolling category ribbon */
+.marquee {
+  display: none !important;
+}
+.marquee-track {
+  display: none !important;
+}

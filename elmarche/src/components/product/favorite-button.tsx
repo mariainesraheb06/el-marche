@@ -86,8 +86,8 @@ export function FavoriteButton({
       aria-label={favorited ? "Retirer des favoris" : "Ajouter aux favoris"}
       aria-pressed={favorited}
       className={cn(
-        "flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-primary bg-transparent text-base font-semibold text-primary transition-colors hover:bg-primary/5",
-        favorited && "border-red-500 text-red-500",
+        "flex h-14 flex-1 min-w-[200px] items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-primary bg-transparent px-6 text-base font-semibold text-primary transition-colors hover:bg-primary/5",
+        favorited && "border-red-500 bg-red-50 text-red-500 hover:bg-red-100",
         isPending && "opacity-60",
         className,
       )}

@@ -45,8 +45,9 @@ export default async function ProductPage({ params }: { params: { id: string } }
         <span className="font-heading text-lg font-bold md:hidden">Détails du produit</span>
       </div>
 
-      <div className="md:grid md:grid-cols-2 md:gap-8">
-        <div>
+      <div className="md:grid md:grid-cols-2 md:gap-8 md:items-start">
+        {/* Left column: Image constrained to a max width on desktop */}
+        <div className="w-full md:max-w-md">
           {product.images.length > 0 ? (
             <div className="flex snap-x snap-mandatory overflow-x-auto md:rounded-2xl [scrollbar-width:none]">
               {product.images.map((image, index) => (
@@ -78,6 +79,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
           )}
         </div>
 
+        {/* Right column: Product details */}
         <div className="space-y-4 px-4 pt-4 md:px-0 md:pt-0">
           <div className="flex items-center justify-between gap-3">
             <Link
@@ -126,30 +128,35 @@ export default async function ProductPage({ params }: { params: { id: string } }
             </ul>
           )}
 
-          {contact ? (
-            <a
-              href={contact}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-whatsapp text-base font-semibold text-whatsapp-foreground transition-opacity hover:opacity-90"
-            >
-              <Phone className="h-5 w-5" aria-hidden />
-              Contacter le vendeur
-            </a>
-          ) : (
-            <p className="rounded-2xl bg-secondary p-4 text-sm text-muted-foreground">
-              Le vendeur n&apos;a pas encore ajouté de numéro WhatsApp.
-            </p>
-          )}
+          {/* Buttons container */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            {contact ? (
+              <a
+                href={contact}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-whatsapp text-base font-semibold text-whatsapp-foreground transition-opacity hover:opacity-90 whitespace-nowrap"
+              >
+                <Phone className="h-5 w-5" aria-hidden />
+                Contacter le vendeur
+              </a>
+            ) : (
+              <p className="flex-1 rounded-2xl bg-secondary p-4 text-sm text-muted-foreground">
+                Le vendeur n&apos;a pas encore ajouté de numéro WhatsApp.
+              </p>
+            )}
 
-          <FavoriteButton
-            productId={product.id}
-            variant="full"
-            initialFavorited={isFavorited}
-          />
+            <FavoriteButton
+              productId={product.id}
+              variant="icon"
+              initialFavorited={isFavorited}
+              className="h-14 w-14 shrink-0 rounded-2xl border-2 border-red-500 bg-transparent text-red-500 shadow-none hover:bg-red-50"
+            />
+          </div>
         </div>
       </div>
-    <div className="px-4 pt-8 md:px-0">
+      
+      <div className="px-4 pt-8 md:px-0">
         <Suspense fallback={null}>
           <SimilarSection productId={product.id} favoriteIds={favoriteIds} />
         </Suspense>
