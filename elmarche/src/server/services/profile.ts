@@ -34,6 +34,7 @@ export async function updateMyProfile(
     updates.whatsapp_number = input.whatsappNumber;
   if (input.shopName !== undefined) updates.shop_name = input.shopName;
   if (input.wilayaCode !== undefined) updates.wilaya_code = input.wilayaCode;
+  if (input.avatarUrl !== undefined) updates.avatar_url = input.avatarUrl;
 
   const updated = await updateProfileById(userId, updates);
   if (!updated) {
