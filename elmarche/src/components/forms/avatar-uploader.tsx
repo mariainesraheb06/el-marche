@@ -12,10 +12,9 @@ type Props = {
   onUploaded: (url: string) => void;
 };
 
-async function getCroppedImg(
-  imageSrc: string, 
-  pixelCrop: { x: number; y: number; width: number; height: number }
-): Promise<Blob> {
+type PixelCrop = { x: number; y: number; width: number; height: number };
+
+async function getCroppedImg(imageSrc: string, pixelCrop: PixelCrop): Promise<Blob> {
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.src = imageSrc;
@@ -49,13 +48,13 @@ async function getCroppedImg(
 export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState<string | null>(initialUrl);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<PixelCrop | null>(null);
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -125,6 +124,7 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
         className="group relative h-24 w-24 overflow-hidden rounded-full border-2 border-primary/20 bg-secondary"
       >
         {url ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img src={url} alt="" className="h-full w-full object-cover" />
         ) : (
           <span className="flex h-full w-full items-center justify-center font-heading text-3xl font-bold text-primary">
@@ -157,7 +157,7 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
               cropShape="round"
               onCropChange={setCrop}
               onZoomChange={setZoom}
-              onCropComplete={(_, croppedArea) => setCroppedAreaPixels(croppedArea)}
+              onCropComplete={(_, croppedArea) => setCroppedAreaPixels(croppedArea as PixelCrop)}
             />
           </div>
           
