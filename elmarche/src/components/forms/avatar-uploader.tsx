@@ -12,7 +12,6 @@ type Props = {
   onUploaded: (url: string) => void;
 };
 
-// Helper to crop the image using canvas based on the crop area
 async function getCroppedImg(imageSrc: string, pixelCrop: any): Promise<Blob> {
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
@@ -50,7 +49,6 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Cropper state
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -72,7 +70,7 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
     const reader = new FileReader();
     reader.addEventListener("load", () => setImageToCrop(reader.result?.toString() || null));
     reader.readAsDataURL(file);
-    e.target.value = ""; // reset input
+    e.target.value = "";
   }
 
   async function handleSaveCrop() {
@@ -106,7 +104,7 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
 
       setUrl(publicUrl);
       onUploaded(publicUrl);
-      setImageToCrop(null); // close modal
+      setImageToCrop(null);
     } catch {
       setError("Impossible d'envoyer la photo. Réessayez.");
     } finally {
@@ -116,7 +114,6 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
 
   return (
     <div className="flex flex-col items-center gap-2">
-      {/* Main Avatar Button */}
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
@@ -146,7 +143,6 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
       <p className="text-xs text-muted-foreground">Touchez la photo pour la changer</p>
       {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
 
-      {/* Crop Modal */}
       {imageToCrop && (
         <div className="fixed inset-0 z-50 flex flex-col bg-black/80 p-4">
           <div className="relative flex-1">
@@ -154,7 +150,7 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
               image={imageToCrop}
               crop={crop}
               zoom={zoom}
-              aspect={1} // Square crop
+              aspect={1}
               cropShape="round"
               onCropChange={setCrop}
               onZoomChange={setZoom}
@@ -164,12 +160,14 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
           
           <div className="mt-4 flex items-center justify-center gap-4">
             <button
+              type="button"
               onClick={() => setImageToCrop(null)}
               className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-white"
             >
               <X className="h-6 w-6" />
             </button>
             <button
+              type="button"
               onClick={handleSaveCrop}
               disabled={busy}
               className="flex h-12 flex-1 max-w-[200px] items-center justify-center gap-2 rounded-full bg-primary font-semibold text-primary-foreground"
