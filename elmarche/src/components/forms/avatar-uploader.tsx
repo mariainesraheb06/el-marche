@@ -147,7 +147,7 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
       {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
 
       {imageToCrop && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-black/80 p-4">
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/80 p-4 pb-12 md:pb-4" style={{ paddingBottom: 'max(3rem, env(safe-area-inset-bottom))' }}>
           <div className="relative flex-1">
             <Cropper
               image={imageToCrop}
@@ -161,7 +161,7 @@ export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) 
             />
           </div>
           
-          <div className="mt-4 flex items-center justify-center gap-4">
+          <div className="mt-4 flex shrink-0 items-center justify-center gap-4">
             <button
               type="button"
               onClick={() => setImageToCrop(null)}
