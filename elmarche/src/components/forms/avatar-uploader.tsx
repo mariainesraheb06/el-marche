@@ -49,7 +49,7 @@ async function getCroppedImg(
 export function AvatarUploader({ userId, name, initialUrl, onUploaded }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState<string | null>(initialUrl);
-  const [busy, setBusy] = useState(false);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
