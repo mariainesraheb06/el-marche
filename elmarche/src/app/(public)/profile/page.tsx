@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { ProfileForm } from "@/components/forms/profile-form";
 import { createClient } from "@/lib/supabase/server";
+import { getProfileById } from "@/server/repositories/profiles";
 import { logout } from "@/server/actions/auth";
 
 export const metadata = { title: "Profil — El Marché" };
@@ -20,23 +22,31 @@ export default async function ProfilePage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/profile");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, role")
-    .eq("id", user.id)
-    .maybeSingle();
+  const profile = await getProfileById(user.id);
+  const role = profile?.role ?? "buyer";
 
   return (
     <section className="mx-auto max-w-md space-y-6 p-6">
       <h1 className="text-2xl font-bold">Profil</h1>
 
-      <div className="space-y-1 rounded-2xl border bg-card p-4">
-        <p className="font-semibold">{profile?.full_name ?? "Utilisateur"}</p>
+      <div className="space-y-1 rounded-2xl border bg-card p-4 text-center">
         <p className="text-sm text-muted-foreground">{user.email}</p>
-        <p className="text-sm text-primary">{ROLE_LABELS[profile?.role ?? "buyer"]}</p>
+        <p className="text-sm font-semibold text-primary">{ROLE_LABELS[role]}</p>
       </div>
 
-      {(profile?.role === "seller" || profile?.role === "admin") && (
+      <div className="rounded-2xl border bg-card p-4">
+        <ProfileForm
+          userId={user.id}
+          role={role}
+          fullName={profile?.fullName ?? ""}
+          whatsappNumber={profile?.whatsappNumber ?? ""}
+          shopName={profile?.shopName ?? ""}
+          wilayaCode={profile?.wilayaCode ?? null}
+          avatarUrl={profile?.avatarUrl ?? null}
+        />
+      </div>
+
+      {(role === "seller" || role === "admin") && (
         <Button asChild className="w-full">
           <Link href="/dashboard">Mon tableau de bord</Link>
         </Button>

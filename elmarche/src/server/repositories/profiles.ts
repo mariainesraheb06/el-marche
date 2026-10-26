@@ -7,6 +7,7 @@ type ProfileRow = {
   whatsapp_number: string | null;
   shop_name: string | null;
   wilaya_code: number | null;
+  avatar_url: string | null;
 };
 
 export type Profile = {
@@ -16,6 +17,7 @@ export type Profile = {
   whatsappNumber: string | null;
   shopName: string | null;
   wilayaCode: number | null;
+  avatarUrl: string | null;
 };
 
 function rowToProfile(row: ProfileRow): Profile {
@@ -26,11 +28,12 @@ function rowToProfile(row: ProfileRow): Profile {
     whatsappNumber: row.whatsapp_number,
     shopName: row.shop_name,
     wilayaCode: row.wilaya_code,
+    avatarUrl: row.avatar_url,
   };
 }
 
 const SELECT_FIELDS =
-  "id, full_name, role, whatsapp_number, shop_name, wilaya_code";
+  "id, full_name, role, whatsapp_number, shop_name, wilaya_code, avatar_url";
 
 export async function getProfileById(userId: string): Promise<Profile | null> {
   const supabase = createClient();
@@ -52,6 +55,7 @@ export async function updateProfileById(
     whatsapp_number?: string;
     shop_name?: string;
     wilaya_code?: number;
+    avatar_url?: string;
   },
 ): Promise<Profile | null> {
   const supabase = createClient();
