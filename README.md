@@ -146,10 +146,10 @@ pytest
 
 | Member              | Contribution                                                                                                                                                                                                                                                                  |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Maria Ines RAHEB    | Deployment and integration (Vercel, Render, Supabase), seed pipeline and demo data, seller store page, password reset, profile editing and avatar upload, redesign, recommendation debugging and personalized fallback, submission material [adjust to what you actually did] |
+| Maria Ines RAHEB    | Deployment and integration (Vercel, Render, Supabase), seed pipeline and demo data, seller store page, password reset, profile editing and avatar upload, redesign, recommendation debugging and personalized fallback, submission material |
 | Ilyes Khelaifia     | Favorites API and UI, recommender service and tests, similar-products and admin API routes, database roles [confirm]                                                                                                                                                          |
 | Djihane Ben Djeddou | Mobile responsive fixes, testing at phone width [confirm]                                                                                                                                                                                                                     |
-| Kassouar Fatima     | [fill in]                                                                                                                                                                                                                                                                     |
+| Kassouar Fatima     | UI/UX design of the web pages                                                                                                                                                                                                                                                                     |
 
 ## Next steps
 
